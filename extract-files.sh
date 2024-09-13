@@ -16,6 +16,8 @@ if [[ ! -d "${MY_DIR}" ]]; then MY_DIR="${PWD}"; fi
 
 ANDROID_ROOT="${MY_DIR}/../../.."
 
+export TARGET_ENABLE_CHECKELF=true
+
 # If XML files don't have comments before the XML header, use this flag
 # Can still be used with broken XML files by using blob_fixup
 export TARGET_DISABLE_XML_FIXING=true
@@ -116,13 +118,21 @@ if [ -z "${ONLY_FIRMWARE}" ]; then
     set_symlink "vendor/lib64/egl/libGLESv2_adreno.so" "vendor/lib64/libGLESv2_adreno.so" "${VENDOR_TXT}"
     set_symlink "vendor/lib64/egl/libq3dtools_adreno.so" "vendor/lib64/libq3dtools_adreno.so" "${VENDOR_TXT}"
 
-    set_as_module "vendor/lib/libadsprpc.so" "${VENDOR_TXT}"
-    set_as_module "vendor/lib/libfastcvopt.so" "${VENDOR_TXT}"
-    set_as_module "vendor/lib/libMpeg4SwEncoder.so" "${VENDOR_TXT}"
-    set_as_module "vendor/lib64/libadsprpc.so" "${VENDOR_TXT}"
-    set_as_module "vendor/lib64/libfastcvopt.so" "${VENDOR_TXT}"
-    set_as_module "vendor/lib64/libMpeg4SwEncoder.so" "${VENDOR_TXT}"
-    set_as_module "vendor/lib64/libthermalclient.so" "${VENDOR_TXT}"
+    # 32bit libmmcamera_faceproc is unable to resolved the following symbols:
+    # __aeabi_memcpy@LIBC_PRIVATE, __aeabi_memset@LIBC_PRIVATE, __gnu_Unwind_Find_exidx@LIBC_PRIVATE
+    # lowi-server, libcne, libwqe depend on libwpa_client, which is a gnu makefile target
+    set_disable_checkelf "vendor/bin/lowi-server" "${VENDOR_TXT}"
+    set_disable_checkelf "vendor/lib/libcne.so" "${VENDOR_TXT}"
+    set_disable_checkelf "vendor/lib/libmmcamera_faceproc.so" "${VENDOR_TXT}"
+    set_disable_checkelf "vendor/lib/libwqe.so" "${VENDOR_TXT}"
+    set_disable_checkelf "vendor/lib64/libcne.so" "${VENDOR_TXT}"
+    set_disable_checkelf "vendor/lib64/libmmcamera_faceproc.so" "${VENDOR_TXT}"
+    set_disable_checkelf "vendor/lib64/libwqe.so" "${VENDOR_TXT}"
+
+    set_module_suffix "vendor/lib/vendor.qti.hardware.tui_comm@1.0.so" "-vendor" "${VENDOR_TXT}"
+    set_module_suffix "vendor/lib/vendor.qti.imsrtpservice@3.0.so" "-vendor" "${VENDOR_TXT}"
+    set_module_suffix "vendor/lib64/vendor.qti.hardware.tui_comm@1.0.so" "-vendor" "${VENDOR_TXT}"
+    set_module_suffix "vendor/lib64/vendor.qti.imsrtpservice@3.0.so" "-vendor" "${VENDOR_TXT}"
 
     extract "${MY_DIR}/proprietary-files-vendor.txt" "${SRC}" "${KANG}" --section "${SECTION}"
 fi
